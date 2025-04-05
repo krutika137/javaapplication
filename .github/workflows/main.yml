@@ -1,0 +1,30 @@
+name: Deploy WAR to Jenkins and Tomcat
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      
+      - name: SCP WAR file to remote server
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.REMOTE_SERVER_HOST }}
+          username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+          key: ${{ secrets.REMOTE_SERVER_SSH_KEY }}
+          port: 22
+          source: "./HelloApp.war"   
+          target: "/tmp/"
+
+      
+      - name: Invoke Jenkins Deployment Job
+        run: |
+          curl -X POST "http://${{ secrets.JENKINS_URL }}/job/${{ secrets.JENKINS_JOB_NAME }}/buildWithParameters?token=${{ secrets.JENKINS_TOKEN }}"
